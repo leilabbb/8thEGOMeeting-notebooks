@@ -35,10 +35,10 @@ To activate the jupyter notebook:
 This will start a Jupyter notebook server in a browser window. You can then run and modify the notebooks.
 
 ## Steps
-####1 - Data request: 
+###1 - Data request: 
 Use the 1.0_quickstart_request_data or 1.1_data_request_using_file notebooks to learn how to download NetCDF data files using the OOI API.
 
-####2 - Create a list of OOI 1.0 datasets to review
+###2 - Create a list of OOI 1.0 datasets to review
 Use the 2.0_data_review_list notebook to learn how to select the correct OOI 1.0 datasets for each deployment of an instrument for review.
 
-####3 - Complete automated review of datasets
+###3 - Complete automated review of datasets
