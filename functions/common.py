@@ -139,7 +139,6 @@ def compare_datasets(df, mapping, preferred_method, index_i, ds0, ds0_method, ds
                                           'n_missing_total': 0}
     for rr in mapping.itertuples():
         index, name_ds0, long_name, name_ds1 = rr
-        print(name_ds0, long_name, name_ds1)
         # Compare data from two data streams (round timestamps to the nearest second).
         ds0_rename = '_'.join((str(name_ds0), 'ds0'))
         [ds0_df, ds0_units, n0, n0_nan] = get_ds_variable_info(ds0, name_ds0, ds0_rename)
@@ -293,6 +292,31 @@ def compare_datasets(df, mapping, preferred_method, index_i, ds0, ds0_method, ds
         
     return df, missing_data_list, diff_gzero_list, var_list
 
+
+def check_coordinate(ds,refdes):
+    file_coordinates = list(ds.coords.keys())
+    if 'SBD' not in refdes.split('-')[1]:
+        check_coords = list(set(['obs', 'time', 'pressure', 'lat', 'lon']) - set(file_coordinates))
+    else:
+        check_coords = list(set(['obs', 'time', 'lat', 'lon']) - set(file_coordinates))
+    
+    if len(check_coords) > 0:
+        if 'pressure' in check_coords:
+            if len([j for j in file_coordinates if 'pressure' in j]) == 1:
+                check_coords.remove('pressure')
+                if len(check_coords) > 0:
+                    coord_test = 'missing: {}'.format(check_coords)
+                else:
+                    coord_test = 'pass'
+            else:
+                coord_test = 'missing: {}'.format(check_coords)
+        else:
+            coord_test = 'missing: {}'.format(check_coords)
+    else:
+        coord_test = 'pass'
+    return file_coordinates, coord_test
+
+
 def create_dir(new_dir):
     # Check if dir exists.. if it doesn't... create it.
     if not os.path.isdir(new_dir):
@@ -403,6 +427,7 @@ def found_data_in_another_stream(missing_data_list):
             fd_test = 'fail: data found in another stream (gaps: {} days: {})'.format(n_missing_gaps, n_missing_days)
     return fd_test
 
+
 def found_data_in_another_stream_diff(fd_test, diff_gzero_list, var_list):
     # Check that the difference between multiple methods for science variables is less than 0
     comparison_details = dict()
@@ -427,6 +452,7 @@ def found_data_in_another_stream_diff(fd_test, diff_gzero_list, var_list):
             comparison_test = 'no other streams for comparison'
             
     return comparison_details
+
 
 def get_deployment_information(data, deployment):
     d_info = [x for x in data['instrument']['deployments'] if x['deployment_number'] == deployment]
@@ -895,9 +921,9 @@ def validate_sci_var_report(rd, sv, ds, index, valid_list_index):
                                   'n_fv': [n_fv],'gr: global_range': [[g_min, g_max]],'n_gr':[n_grange],
                                   'n_nan': [n_nan],  'num_outliers': [num_outliers],
                                   'n_stats': [n_stats], 'mean': [mean],'vmin': [vmin],
-                                  'vmax': [vmax], 'sd': [sd], 'percent_valid_data': [percent_valid_data], 
+                                  'vmax': [vmax], 'sd': [sd], 'percent_valid_data': [percent_valid_data],
                                   'pvd_test': [pvd_test], 'dlst': [dlst]
-                                 }, index = [index])
+                                 }, index = [index]) 
                                  
     return valid_sci_dic
 
