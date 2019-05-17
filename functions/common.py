@@ -1,6 +1,7 @@
 #! /usr/bin/env python
 import os
 import pandas as pd
+import netCDF4 as nc
 import requests
 import re
 import itertools
@@ -962,3 +963,104 @@ def var_units(variable):
         y_units = 'no_units'
 
     return y_units
+
+
+def time_gap_test(reviewlist, col, dr_data):
+    df = pd.DataFrame()
+    for ii in range(len(reviewlist)):         
+        deploy_num = int(reviewlist[col[0]][ii].split('t')[-1])
+        method = reviewlist[col[2]][ii]
+        stream = reviewlist[col[1]][ii].split('/')[-2].split('-')[-1]
+        deploy_info = get_deployment_information(dr_data, deploy_num)
+        deploy_depth = deploy_info['deployment_depth']
+
+        # Calculate days deployed
+        deploy_start = str(deploy_info['start_date'])
+        deploy_stop = str(deploy_info['stop_date'])    
+        if deploy_stop != 'None':
+            r_deploy_start = pd.to_datetime(deploy_start).replace(hour=0, minute=0, second=0)
+            if deploy_stop.split('T')[1] == '00:00:00':
+                r_deploy_stop = pd.to_datetime(deploy_stop)
+            else:
+                r_deploy_stop = (pd.to_datetime(deploy_stop) + timedelta(days=1)).replace(hour=0, minute=0, second=0)
+            n_days_deployed = (r_deploy_stop - r_deploy_start).days
+        else:
+            n_days_deployed = None
+
+        # Get time array
+        ds = xr.open_dataset(reviewlist[col[1]][ii], mask_and_scale=False)
+        ds = ds.swap_dims({'obs': 'time'})
+        time = ds['time']
+
+        # Check that the timestamps in the file are unique
+        len_time = time.__len__()
+        len_time_unique = np.unique(time).__len__()
+        if len_time == len_time_unique:
+            time_unique = 'pass'
+        else:
+            time_unique = 'fail'
+
+        # Check that the timestamps in the file are in ascending order
+        # convert time to number
+        time_in = [dt.datetime.utcfromtimestamp(np.datetime64(x).astype('O')/1e9) for x in time.values]
+        time_data = nc.date2num(time_in, 'seconds since 1900-01-01')
+
+        # Create a list of True or False by iterating through the array of time and checking
+        # if every time stamp is increasing
+        result = [(time_data[k + 1] - time_data[k]) > 0 for k in range(len(time_data) - 1)]
+
+        # Print outcome of the iteration with the list of indices when time is not increasing
+        if result.count(True) == len(time) - 1:
+            time_ascending = 'pass'
+        else:
+            ind_fail = {k: time_in[k] for k, v in enumerate(result) if v is False}
+            time_ascending = 'fail: {}'.format(ind_fail)
+
+        # calculate gaps size at start of deployment    
+        start_gap = (pd.to_datetime(str(time.values[0])) - r_deploy_start).days
+
+        # calculate gap size at end of deployment
+        end_gap = (r_deploy_stop - pd.to_datetime(str(time.values[-1]))).days    
+
+        # Count the number of days for which there is at least 1 timestamp    
+        n_days = len(np.unique(time.values.astype('datetime64[D]')))
+
+        # Get a list of data gaps >1 day    
+        time_df = pd.DataFrame(time.values, columns=['time'])
+        gap_list = timestamp_gap_test(time_df)
+
+        # Calculate the sampling rate to the nearest second
+        time_df['diff'] = time_df['time'].diff().astype('timedelta64[s]')
+        rates_df = time_df.groupby(['diff']).agg(['count'])
+        n_diff_calc = len(time_df) - 1
+        rates = dict(n_unique_rates=len(rates_df), common_sampling_rates=dict())
+        for i, row in rates_df.iterrows():
+            percent = (float(row['time']['count']) / float(n_diff_calc))
+            if percent > 0.1:
+                rates['common_sampling_rates'].update({int(i): '{:.2%}'.format(percent)})
+        sampling_rt_sec = None
+        for k, v in rates['common_sampling_rates'].items():
+            if float(v.strip('%')) > 50.00:
+                sampling_rt_sec = k
+
+        if not sampling_rt_sec:
+            sampling_rt_sec = 'no consistent sampling rate: {}'.format(rates['common_sampling_rates']) 
+
+        df0 = pd.DataFrame({
+                            'Delivery Method': [method],      
+                            'Data Stream': [stream],
+                            'Deployment Days': [n_days_deployed],
+                            'File Days': [n_days], 
+                            'Timestamps': [len_time],
+                            'Start Gap': [start_gap],
+                            'End Gap': [end_gap],    
+                            'Gap List': [gap_list],
+                            'Gap Days': [int(len(gap_list))],
+                            'Timestamps': [len_time],
+                            'Sampling Rate(s)': [sampling_rt_sec],
+                            'Time Order': [['Unique: '+time_unique,'Ascending: '+time_ascending]],
+                            'Data Coverage(%)': [round((n_days*100)/n_days_deployed)]
+                            }, index=[deploy_num])
+
+        df = df.append(df0)
+    return df
