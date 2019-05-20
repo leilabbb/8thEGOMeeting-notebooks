@@ -253,13 +253,14 @@ def compare_datasets(df, mapping, preferred_method, index_i, ds0, ds0_method, ds
                     min_diff = round(min(abs(diff)), 10)
                     max_diff = round(max(abs(diff)), 10)
                     n_comparison = len(diff)
+          
         compare_summary = dict( 
-                                ds0=dict(stream=ds0.stream,name=name_ds0, units=ds0_units, n=n0, n_nan=n0_nan, missing=ds0_missing_dict),
-                                ds1=dict(stream=ds1.stream,name=name_ds1, units=ds1_units, n=n1, n_nan=n1_nan, missing=ds1_missing_dict),
+                                ds0=dict(name=name_ds0, units=ds0_units, n=n0, n_nan=n0_nan, missing=ds0_missing_dict),
+                                ds1=dict(name=name_ds1, units=ds1_units, n=n1, n_nan=n1_nan, missing=ds1_missing_dict),
                                 unit_test=unit_test, n_comparison=n_comparison, n_diff_greater_zero=n_diff_g_zero,
                                 min_abs_diff=min_diff, max_abs_diff=max_diff
                               )
-        stream = compare_summary[preferred_method]['stream']
+        
         name = compare_summary[preferred_method]['name']
         units = compare_summary[preferred_method]['units']
         unit_test = compare_summary['unit_test']
@@ -279,8 +280,8 @@ def compare_datasets(df, mapping, preferred_method, index_i, ds0, ds0_method, ds
         diff_gzero_list.append(percent_diff_greater_zero)
         var_list.append(name) 
 
-        df0 = pd.DataFrame({'Stream': [stream],
-                            'Parameter':[name], 
+        df0 = pd.DataFrame({
+                            'parameter':[name], 
                             'unit': [units], 
                             'unit_test': [unit_test], 
                             'n': [n] ,
