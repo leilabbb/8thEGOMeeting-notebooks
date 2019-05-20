@@ -11,6 +11,7 @@ import numpy as np
 import datetime as dt
 from urllib.request import urlopen
 import json
+from ast import literal_eval
 from datetime import timedelta
 from geopy.distance import geodesic
 import urllib3
@@ -416,7 +417,7 @@ def found_data_in_another_stream(missing_data_list):
             elif 'No valid data to compare' in md:
                 continue
             else:
-                md = ast.literal_eval(md)
+                md = literal_eval(md)
                 n_missing_gaps.append(len(md['missing_data_gaps']))
                 n_missing_days.append(md['n_missing_days_total'])
         if len(n_missing_gaps) == 0:
@@ -819,6 +820,15 @@ def timestamp_gap_test(df):
         gap_list.append([pd.to_datetime(str(df['time'][i-1])).strftime('%Y-%m-%dT%H:%M:%S'),
                          pd.to_datetime(str(df['time'][i])).strftime('%Y-%m-%dT%H:%M:%S')])
     return gap_list
+
+
+def unique_timestamps_hour(ds):
+    # return dataframe of the unique timestamps rounded to the nearest hour
+    df = pd.DataFrame(ds['time'].values, columns=['time'])
+    df = df['time'].map(lambda t: t.replace(second=0, microsecond=0, nanosecond=0, minute=0, hour=t.hour) + timedelta(hours=t.minute // 30))
+    udf = pd.DataFrame(np.unique(df), columns=['time'])
+
+    return udf
 
 
 def validate_sci_var_report(rd, sv, ds, index, valid_list_index):
