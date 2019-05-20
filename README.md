@@ -49,4 +49,6 @@ This will start a Jupyter notebook server in a browser window. You can then run 
 
 - Evaluate science data: Use the [5.0_valid_data_test](https://github.com/ooi-data-lab/8thEGOMeeting-notebooks/blob/master/5.0_valid_data_test.ipynb) notebook to learn how the science data variables are reviewed.
 
+- Compare data from different methods: Use the [6.0_data_comparison_test](https://github.com/ooi-data-lab/8thEGOMeeting-notebooks/blob/master/6.0_data_comparison_test.ipynb) notebook for a demonstration of how to compare data values among different delivery methods.
+
 For more a complete list of automated tools used for OOI 1.0 data reviews, check out our [Data Review github repo](https://github.com/ooi-data-lab/data-review-tools).
