@@ -140,14 +140,17 @@ def compare_datasets(df, mapping, preferred_method, index_i, ds0, ds0_method, ds
     blank_dict = {'missing_data_gaps': [], 'n_missing': [], 'n_missing_days_total': 0,
                                           'n_missing_total': 0}
     for rr in mapping.itertuples():
-        index, name_ds0, long_name, name_ds1 = rr
+        index, name, long_name_x, long_name_y = rr
+#         index, name_ds0, long_name, name_ds1 = rr
         # Compare data from two data streams (round timestamps to the nearest second).
-        ds0_rename = '_'.join((str(name_ds0), 'ds0'))
-        [ds0_df, ds0_units, n0, n0_nan] = get_ds_variable_info(ds0, name_ds0, ds0_rename)
-
-        ds1_rename = '_'.join((str(name_ds1), 'ds1'))
-        [ds1_df, ds1_units, n1, n1_nan] = get_ds_variable_info(ds1, name_ds1, ds1_rename)
-
+#         ds0_rename = '_'.join((str(name_ds0), 'ds0'))
+        ds0_rename = '_'.join((str(name), 'ds0'))
+#         [ds0_df, ds0_units, n0, n0_nan] = get_ds_variable_info(ds0, name_ds0, ds0_rename)
+        [ds0_df, ds0_units, n0, n0_nan] = get_ds_variable_info(ds0, name, ds0_rename)
+#         ds1_rename = '_'.join((str(name_ds1), 'ds1'))
+        ds1_rename = '_'.join((str(name), 'ds1'))
+#         [ds1_df, ds1_units, n1, n1_nan] = get_ds_variable_info(ds1, name_ds1, ds1_rename)
+        [ds1_df, ds1_units, n1, n1_nan] = get_ds_variable_info(ds1, name, ds1_rename)
         # skip if the variables have more than 1 dimension
         if (type(ds0_df) == str) or (type(ds1_df) == str):
             print('variables have more than 1 dimension')
@@ -255,8 +258,8 @@ def compare_datasets(df, mapping, preferred_method, index_i, ds0, ds0_method, ds
                     n_comparison = len(diff)
           
         compare_summary = dict( 
-                                ds0=dict(name=name_ds0, units=ds0_units, n=n0, n_nan=n0_nan, missing=ds0_missing_dict),
-                                ds1=dict(name=name_ds1, units=ds1_units, n=n1, n_nan=n1_nan, missing=ds1_missing_dict),
+                                ds0=dict(name=ds0_rename, units=ds0_units, n=n0, n_nan=n0_nan, missing=ds0_missing_dict),
+                                ds1=dict(name=ds1_rename, units=ds1_units, n=n1, n_nan=n1_nan, missing=ds1_missing_dict),
                                 unit_test=unit_test, n_comparison=n_comparison, n_diff_greater_zero=n_diff_g_zero,
                                 min_abs_diff=min_diff, max_abs_diff=max_diff
                               )
